@@ -17,7 +17,7 @@ def on_control_message(ch, method, properties, body, controller: Controller):
 
 
 def main():
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(settings.rabbit_host))
     channel = connection.channel()
     channel.queue_declare(queue=settings.control_queue_name)
 

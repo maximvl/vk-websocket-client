@@ -12,3 +12,4 @@ votes_queue_name = "votes"
 worker_idle_timeout_seconds = int(os.getenv("IDLE_TIMEOUT_MIN", "15")) * 60
 
 randomize_votes = os.getenv("RANDOMIZE_VOTES", "false") == "true"
+rabbit_host = os.getenv("RABBIT_HOST", "localhost")
