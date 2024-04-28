@@ -46,7 +46,8 @@ def start_websocket_client(queue: Queue) -> None:
 
         parsed_message = on_message(ws, json_message)
         if parsed_message:
-            parsed_message.message = str(random.randint(1, 5))
+            if settings.randomize_votes:
+                parsed_message.message = str(random.randint(1, 5))
             # return
             channel.basic_publish(
                 exchange="",
