@@ -1,4 +1,5 @@
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
+from typing import TypedDict
 
 
 @dataclass
@@ -6,8 +7,9 @@ class PingMessage:
     last_ping_at: int
 
 
-@dataclass
-class ChatMessage:
+class ChatMessage(TypedDict):
+    id: int
     username: str
     user_id: int
     message: str
+    ts: int

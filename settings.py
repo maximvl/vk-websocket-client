@@ -9,9 +9,4 @@ vk_channel = os.getenv("VK_CHANNEL", lasqa_channel)
 worker_idle_timeout_seconds = int(os.getenv("IDLE_TIMEOUT_MIN", "15")) * 60
 randomize_votes = os.getenv("RANDOMIZE_VOTES", "false") == "true"
 
-rabbit_host = os.getenv("RABBIT_HOST", "localhost")
-rabbit_user = os.getenv("RABBIT_USER", "guest")
-rabbit_pass = os.getenv("RABBIT_PASS", "guest")
-rabbit_vhost = os.getenv("RABBIT_VHOST", "/")
-control_queue_name = "control"
-votes_queue_name = "votes"
+rpc_address = os.getenv("RPC_ADDRESS", "tcp://0.0.0.0:4242")

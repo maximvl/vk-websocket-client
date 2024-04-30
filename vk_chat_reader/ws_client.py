@@ -1,16 +1,14 @@
 from multiprocessing import Queue
 import time
 from typing import Optional
-import pika
-from pika.adapters.blocking_connection import BlockingChannel
 import websocket
 import json
 import requests
 from bs4 import BeautifulSoup
+import zerorpc
 import settings
 import random
 from queue import Empty
-from dataclasses import asdict
 
 from vk_chat_reader.types import PingMessage, ChatMessage
 
@@ -20,20 +18,15 @@ websocket_url = (
 )
 
 
-def start_websocket_client(queue: Queue) -> None:
+def start_websocket_client(control_queue: Queue, messages_queue: Queue) -> None:
     token = get_websocket_token()
-
-    connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
-    channel = connection.channel()
-
-    channel.queue_declare(queue=settings.votes_queue_name)
     last_ping_at = time.time()
 
     def handle_message(ws, json_message):
         control_message = None
         nonlocal last_ping_at
         try:
-            control_message = queue.get_nowait()
+            control_message = control_queue.get_nowait()
         except Empty:
             pass
 
@@ -47,13 +40,9 @@ def start_websocket_client(queue: Queue) -> None:
         parsed_message = on_message(ws, json_message)
         if parsed_message:
             if settings.randomize_votes:
-                parsed_message.message = str(random.randint(1, 5))
+                parsed_message["message"] = str(random.randint(1, 5))
             # return
-            channel.basic_publish(
-                exchange="",
-                routing_key=settings.votes_queue_name,
-                body=json.dumps(asdict(parsed_message)),
-            )
+            messages_queue.put(parsed_message)
             print(parsed_message)
 
     def on_open(ws):
@@ -73,8 +62,10 @@ def start_websocket_client(queue: Queue) -> None:
         skip_utf8_validation=True,
     )
     print("Websocket client stopped")
-    channel.queue_purge(queue=settings.votes_queue_name)
-    channel.close()
+    rpc_client = zerorpc.Client()
+    rpc_client.connect(settings.rpc_address)
+    rpc_client.clear_storage()
+    print("Storage cleaned")
 
 
 def on_message(ws, json_message) -> Optional[ChatMessage]:
@@ -107,6 +98,11 @@ def parse_message(json_message: str) -> Optional[ChatMessage]:
 
     message_text = "".join([json.loads(item)[0] for item in text_items])
 
+    try:
+        int(message_text)
+    except Exception:
+        return None
+
     author = pub_data.get("data", {}).get("author", {})
     author_id = author.get("id")
     if not author_id:
@@ -116,7 +112,21 @@ def parse_message(json_message: str) -> Optional[ChatMessage]:
     if not author_name:
         return None
 
-    return ChatMessage(username=author_name, user_id=author_id, message=message_text)
+    created_at = pub_data.get("data", {}).get("createdAt")
+    if not created_at:
+        return None
+
+    message_id = pub_data.get("data", {}).get("id")
+    if not message_id:
+        return None
+
+    return ChatMessage(
+        id=message_id,
+        username=author_name,
+        user_id=author_id,
+        message=message_text,
+        ts=created_at,
+    )
 
 
 def on_error(ws, error):
