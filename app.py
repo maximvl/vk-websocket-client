@@ -29,6 +29,9 @@ class RPCServer:
         self.storage.clear()
         return True
 
+    def ping(self):
+        return True
+
 
 def main():
     print("Staring RPC server")
