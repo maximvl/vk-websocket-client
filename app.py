@@ -37,7 +37,11 @@ def main():
     print(f"Staring RPC server on {settings.rpc_address}")
     server = zerorpc.Server(RPCServer())
     server.bind(settings.rpc_address)
-    server.run()
+    try:
+        server.run()
+    except Exception as e:
+        print(e)
+    server.close()
 
 
 if __name__ == "__main__":
