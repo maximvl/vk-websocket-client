@@ -42,8 +42,9 @@ def start_websocket_client(control_queue: Queue, messages_queue: Queue) -> None:
             if settings.randomize_votes:
                 parsed_message["message"] = str(random.randint(1, 5))
             # return
-            messages_queue.put(parsed_message)
             print(parsed_message)
+            messages_queue.put(parsed_message)
+
 
     def on_open(ws):
         send_initial_messages(token, ws)
@@ -81,6 +82,9 @@ def parse_message(json_message: str) -> Optional[ChatMessage]:
     message_data = None
     author_id = None
     author_name = None
+
+    print("parsing")
+    print(json_message)
 
     pub_data = message.get("push", {}).get("pub", {}).get("data", {})
     if pub_data.get("type") != "message":
