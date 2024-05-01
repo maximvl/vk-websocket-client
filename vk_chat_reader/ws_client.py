@@ -67,9 +67,10 @@ def start_websocket_client(control_queue: Queue, messages_queue: Queue) -> None:
 
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
-    socket.connect(settings.zeromq_address)
+    socket.connect(settings.zeromq_client_address)
     socket.send_json({"command": "clear_storage"})
     socket.close()
+    context.term()
     eprint("Storage cleaned")
 
 

@@ -63,14 +63,19 @@ class RPCServer:
 
 async def main():
     server = RPCServer()
-    eprint(f"Staring ZMQ server on {settings.zeromq_address}")
+    eprint(f"Staring ZMQ server on {settings.zeromq_listen_address}")
     zeromq_context = zmq.asyncio.Context()
     sock = zeromq_context.socket(zmq.REP)
     sock.setsockopt(zmq.IPV6, 1)
-    sock.bind(settings.zeromq_address)
+    sock.bind(settings.zeromq_listen_address)
 
     while True:
-        str_msg = await sock.recv_string()
+        try:
+            str_msg = await sock.recv_string()
+        except Exception as e:
+            eprint(f"Exception: f{str(e)}")
+            break
+
         try:
             msg = json.loads(str_msg)
             reply = server.process_message(msg)
@@ -79,8 +84,10 @@ async def main():
             reply = {"status": "error", "message": str(e)}
         await sock.send_string(json.dumps(reply))
 
+    eprint("Shutting down")
     sock.close()
     zeromq_context.term()
+    server.controller.stop_worker()
 
 
 if __name__ == "__main__":
