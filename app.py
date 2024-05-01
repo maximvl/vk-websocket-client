@@ -66,6 +66,7 @@ async def main():
     eprint(f"Staring ZMQ server on {settings.zeromq_address}")
     zeromq_context = zmq.asyncio.Context()
     sock = zeromq_context.socket(zmq.REP)
+    sock.setsockopt(zmq.IPV6, 1)
     sock.bind(settings.zeromq_address)
 
     while True:
