@@ -34,7 +34,7 @@ class RPCServer:
 
 
 def main():
-    print("Staring RPC server")
+    print(f"Staring RPC server on {settings.rpc_address}")
     server = zerorpc.Server(RPCServer())
     server.bind(settings.rpc_address)
     server.run()
