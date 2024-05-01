@@ -47,7 +47,7 @@ class RPCServer:
                 if not client_id or not ts_from or not isinstance(ts_from, int):
                     return {"status": "error", "message": "client_id and ts_from are required"}
                 messages = self.get_messages(client_id=client_id, ts_from=ts_from)
-                return {"status:": "ok", "messages": messages}
+                return {"status": "ok", "messages": messages}
             case "reset_client":
                 client_id = msg.get("client_id")
                 if not client_id:
