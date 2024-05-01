@@ -1,11 +1,19 @@
 import settings
-import zerorpc
+import zmq
 
-client = zerorpc.Client(timeout=3)
-client.connect(settings.rpc_address)
+context = zmq.Context()
+socket = context.socket(zmq.REQ)
+socket.connect(settings.zeromq_address)
 
 try:
-    assert client.ping() == True
+    socket.send_json({"command": "ping"})
+    event = socket.poll(2000)
+    if event == 0:
+        print("Poll timeout")
+        exit(1)
+    data = socket.recv_json(flags=zmq.NOBLOCK)
+    assert data.get("status") == "ok"
+    print("pong")
     exit(0)
 except Exception as e:
     exit(1)
