@@ -68,7 +68,7 @@ def start_websocket_client(control_queue: Queue, messages_queue: Queue) -> None:
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
     socket.connect(settings.zeromq_address)
-    socket.send({"command": "clear_storage"})
+    socket.send_json({"command": "clear_storage"})
     socket.close()
     eprint("Storage cleaned")
 
@@ -151,7 +151,7 @@ def on_close(ws, status_code, msg):
 
 
 def send_initial_messages(token: str, ws) -> None:
-    eprint("Subscribing to", settings.vk_channel)
+    eprint(f"Subscribing to {settings.vk_channel}")
 
     initial_message = json.dumps(
         {
