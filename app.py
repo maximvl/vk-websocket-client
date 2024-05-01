@@ -16,17 +16,17 @@ class RPCServer:
         self.controller = Controller()
         self.storage = Storage()
 
-    def get_messages(self, reader_id: str, ts_from: int):
-        print(f"fetching messages for {reader_id}, since {ts_from}")
+    def get_messages(self, client_id: str, ts_from: int):
+        print(f"fetching messages for {client_id}, since {ts_from}")
         self.controller.start_worker()
         new_messages = self.controller.read_all_messages()
         self.storage.add_messages(new_messages)
-        messages = self.storage.get_unread_messages(reader_id, ts_from)
+        messages = self.storage.get_unread_messages(client_id, ts_from)
         return messages
 
-    def reset_reader(self, reader_id: str):
-        print(f"resetting messages for {reader_id}")
-        self.storage.reset_reader(reader_id)
+    def reset_client(self, client_id: str):
+        print(f"resetting messages for {client_id}")
+        self.storage.reset_reader(client_id)
         return True
 
     def clear_storage(self):
@@ -40,17 +40,17 @@ class RPCServer:
             case "ping":
                 return {"status": "ok"}
             case "get_messages":
-                reader_id = msg.get("reader_id")
+                client_id = msg.get("client_id")
                 ts_from = msg.get("ts_from")
-                if not reader_id or not ts_from or not isinstance(ts_from, int):
-                    return {"status": "error", "message": "reader_id and ts_from are required"}
-                messages = self.get_messages(reader_id=reader_id, ts_from=ts_from)
+                if not client_id or not ts_from or not isinstance(ts_from, int):
+                    return {"status": "error", "message": "client_id and ts_from are required"}
+                messages = self.get_messages(client_id=client_id, ts_from=ts_from)
                 return {"status:": "ok", "messages": messages}
-            case "reset_reader":
-                reader_id = msg.get("reader_id")
-                if not reader_id:
-                    return {"status": "error", "message": "reader_id is required"}
-                self.reset_reader(reader_id=reader_id)
+            case "reset_client":
+                client_id = msg.get("client_id")
+                if not client_id:
+                    return {"status": "error", "message": "client_id is required"}
+                self.reset_client(client_id=client_id)
                 return {"status": "ok"}
             case "clear_storage":
                 self.clear_storage()
@@ -74,6 +74,9 @@ async def main():
         except Exception as e:
             reply = {"status": "error", "message": str(e)}
         await sock.send_string(json.dumps(reply))
+
+    sock.close()
+    zeromq_context.term()
 
 
 if __name__ == "__main__":
