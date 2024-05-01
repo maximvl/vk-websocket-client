@@ -9,6 +9,7 @@ import settings
 import random
 from queue import Empty
 import zmq
+from vk_chat_reader.utils import eprint
 
 from vk_chat_reader.types import PingMessage, ChatMessage
 
@@ -34,7 +35,7 @@ def start_websocket_client(control_queue: Queue, messages_queue: Queue) -> None:
             last_ping_at = control_message.last_ping_at
 
         if int(time.time()) - last_ping_at > settings.worker_idle_timeout_seconds:
-            print("Closing websocket due to inactivity")
+            eprint("Closing websocket due to inactivity")
             ws.close()
 
         parsed_message = on_message(ws, json_message)
@@ -42,14 +43,14 @@ def start_websocket_client(control_queue: Queue, messages_queue: Queue) -> None:
             if settings.randomize_votes:
                 parsed_message["message"] = str(random.randint(1, 5))
             # return
-            print(parsed_message)
+            eprint(f"Sent {parsed_message}")
             messages_queue.put(parsed_message)
 
 
     def on_open(ws):
         send_initial_messages(token, ws)
 
-    print("Starting websocket client")
+    eprint("Starting websocket client")
     ws = websocket.WebSocketApp(
         websocket_url,
         on_message=handle_message,
@@ -62,18 +63,18 @@ def start_websocket_client(control_queue: Queue, messages_queue: Queue) -> None:
         reconnect=5,
         skip_utf8_validation=True,
     )
-    print("Websocket client stopped")
+    eprint("Websocket client stopped")
 
     context = zmq.Context()
     socket = context.socket(zmq.REQ)
     socket.connect(settings.zeromq_address)
     socket.send({"command": "clear_storage"})
     socket.close()
-    print("Storage cleaned")
+    eprint("Storage cleaned")
 
 
 def on_message(ws, json_message) -> Optional[ChatMessage]:
-    # print(f" -> {json_message}")
+    # eprint(f" -> {json_message}")
     if json_message == b"{}":
         ws.send("{}")
         return None
@@ -86,8 +87,8 @@ def parse_message(json_message: str) -> Optional[ChatMessage]:
     author_id = None
     author_name = None
 
-    print("parsing")
-    print(json_message)
+    eprint("parsing")
+    # eprint(json_message)
 
     pub_data = message.get("push", {}).get("pub", {}).get("data", {})
     if pub_data.get("type") != "message":
@@ -137,20 +138,20 @@ def parse_message(json_message: str) -> Optional[ChatMessage]:
 
 
 def on_error(ws, error):
-    print("*** WS Error ***")
-    print(error)
-    print("*** WS Error ***")
+    eprint("*** WS Error ***")
+    eprint(error)
+    eprint("*** WS Error ***")
 
 
 def on_close(ws, status_code, msg):
-    print("*** WS Closed ***")
-    print(status_code)
-    print(msg)
-    print("*** WS Closed ***")
+    eprint("*** WS Closed ***")
+    eprint(status_code)
+    eprint(msg)
+    eprint("*** WS Closed ***")
 
 
 def send_initial_messages(token: str, ws) -> None:
-    print("Subscribing to", settings.vk_channel)
+    eprint("Subscribing to", settings.vk_channel)
 
     initial_message = json.dumps(
         {

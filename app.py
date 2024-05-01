@@ -1,16 +1,13 @@
 from vk_chat_reader.controller import Controller
 from vk_chat_reader.storage import Storage
 from vk_chat_reader.ws_client import get_websocket_token, start_websocket_client
+from vk_chat_reader.utils import eprint
 import settings
 import time
 import zmq.asyncio
 import asyncio
 import json
-import sys
 
-
-def eprint(msg: str):
-    print(msg, file=sys.stderr)
 
 
 class RPCServer:
