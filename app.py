@@ -15,6 +15,7 @@ class RPCServer:
         self.storage = Storage()
 
     def get_messages(self, reader_id: str, ts_from: int):
+        print(f"fetching messages for {reader_id}, since {ts_from}")
         self.controller.start_worker()
         new_messages = self.controller.read_all_messages()
         self.storage.add_messages(new_messages)
@@ -22,10 +23,12 @@ class RPCServer:
         return messages
 
     def reset_reader(self, reader_id: str):
+        print(f"resetting messages for {reader_id}")
         self.storage.reset_reader(reader_id)
         return True
 
     def clear_storage(self):
+        print(f"cleaning storage")
         self.storage.clear()
         return True
 
