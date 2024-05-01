@@ -6,6 +6,11 @@ import time
 import zmq.asyncio
 import asyncio
 import json
+import sys
+
+
+def eprint(msg: str):
+    print(msg, file=sys.stderr)
 
 
 class RPCServer:
@@ -17,7 +22,7 @@ class RPCServer:
         self.storage = Storage()
 
     def get_messages(self, client_id: str, ts_from: int):
-        print(f"fetching messages for {client_id}, since {ts_from}")
+        eprint(f"fetching messages for {client_id}, since {ts_from}")
         self.controller.start_worker()
         new_messages = self.controller.read_all_messages()
         self.storage.add_messages(new_messages)
@@ -25,12 +30,12 @@ class RPCServer:
         return messages
 
     def reset_client(self, client_id: str):
-        print(f"resetting messages for {client_id}")
+        eprint(f"resetting messages for {client_id}")
         self.storage.reset_reader(client_id)
         return True
 
     def clear_storage(self):
-        print(f"cleaning storage")
+        eprint(f"cleaning storage")
         self.storage.clear()
         return True
 
@@ -61,7 +66,7 @@ class RPCServer:
 
 async def main():
     server = RPCServer()
-    print(f"Staring ZMQ server on {settings.zeromq_address}")
+    eprint(f"Staring ZMQ server on {settings.zeromq_address}")
     zeromq_context = zmq.asyncio.Context()
     sock = zeromq_context.socket(zmq.REP)
     sock.bind(settings.zeromq_address)
@@ -72,6 +77,7 @@ async def main():
             msg = json.loads(str_msg)
             reply = server.process_message(msg)
         except Exception as e:
+            eprint(f"Exception: f{str(e)}")
             reply = {"status": "error", "message": str(e)}
         await sock.send_string(json.dumps(reply))
 
