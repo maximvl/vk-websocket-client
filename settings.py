@@ -9,4 +9,4 @@ vk_channel = os.getenv("VK_CHANNEL", lasqa_channel)
 worker_idle_timeout_seconds = int(os.getenv("IDLE_TIMEOUT_MIN", "15")) * 60
 randomize_votes = os.getenv("RANDOMIZE_VOTES", "false") == "true"
 
-rpc_address = os.getenv("RPC_ADDRESS", "tcp://0.0.0.0:4242")
+zeromq_address = os.getenv("RPC_ADDRESS", "tcp://127.0.0.1:4242")

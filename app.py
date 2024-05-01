@@ -3,7 +3,9 @@ from vk_chat_reader.storage import Storage
 from vk_chat_reader.ws_client import get_websocket_token, start_websocket_client
 import settings
 import time
-import zerorpc
+import zmq.asyncio
+import asyncio
+import json
 
 
 class RPCServer:
@@ -32,20 +34,47 @@ class RPCServer:
         self.storage.clear()
         return True
 
-    def ping(self):
-        return True
+    def process_message(self, msg: dict) -> dict:
+        command = msg.get("command")
+        match command:
+            case "ping":
+                return {"status": "ok"}
+            case "get_messages":
+                reader_id = msg.get("reader_id")
+                ts_from = msg.get("ts_from")
+                if not reader_id or not ts_from or not isinstance(ts_from, int):
+                    return {"status": "error", "message": "reader_id and ts_from are required"}
+                messages = self.get_messages(reader_id=reader_id, ts_from=ts_from)
+                return {"status:": "ok", "messages": messages}
+            case "reset_reader":
+                reader_id = msg.get("reader_id")
+                if not reader_id:
+                    return {"status": "error", "message": "reader_id is required"}
+                self.reset_reader(reader_id=reader_id)
+                return {"status": "ok"}
+            case "clear_storage":
+                self.clear_storage()
+                return {"status": "ok"}
+            case _:
+                return {"status": "error", "message": "unknown command"}
 
 
-def main():
-    print(f"Staring RPC server on {settings.rpc_address}")
-    server = zerorpc.Server(RPCServer())
-    server.bind(settings.rpc_address)
-    try:
-        server.run()
-    except Exception as e:
-        print(e)
-    server.close()
+async def main():
+    server = RPCServer()
+    print(f"Staring ZMQ server on {settings.zeromq_address}")
+    zeromq_context = zmq.asyncio.Context()
+    sock = zeromq_context.socket(zmq.REP)
+    sock.bind(settings.zeromq_address)
+
+    while True:
+        str_msg = await sock.recv_string()
+        try:
+            msg = json.loads(str_msg)
+            reply = server.process_message(msg)
+        except Exception as e:
+            reply = {"status": "error", "message": str(e)}
+        await sock.send_string(json.dumps(reply))
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

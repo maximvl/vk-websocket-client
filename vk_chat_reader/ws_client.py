@@ -5,10 +5,10 @@ import websocket
 import json
 import requests
 from bs4 import BeautifulSoup
-import zerorpc
 import settings
 import random
 from queue import Empty
+import zmq
 
 from vk_chat_reader.types import PingMessage, ChatMessage
 
@@ -63,9 +63,12 @@ def start_websocket_client(control_queue: Queue, messages_queue: Queue) -> None:
         skip_utf8_validation=True,
     )
     print("Websocket client stopped")
-    rpc_client = zerorpc.Client()
-    rpc_client.connect(settings.rpc_address)
-    rpc_client.clear_storage()
+
+    context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+    socket.connect(settings.zeromq_address)
+    socket.send({"command": "clear_storage"})
+    socket.close()
     print("Storage cleaned")
 
 
