@@ -4,7 +4,7 @@ import zmq
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
 socket.setsockopt(zmq.IPV6, 1)
-socket.connect(settings.zeromq_address)
+socket.connect(settings.zeromq_client_address)
 
 try:
     socket.send_json({"command": "ping"})
