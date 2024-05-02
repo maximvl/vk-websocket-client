@@ -1,5 +1,8 @@
 import settings
 import zmq
+import os
+
+print_pong = os.environ.get("PRINT_PONG")
 
 context = zmq.Context()
 socket = context.socket(zmq.REQ)
@@ -14,7 +17,8 @@ try:
         exit(1)
     data = socket.recv_json(flags=zmq.NOBLOCK)
     assert data.get("status") == "ok"
-    print("pong")
+    if print_pong:
+        print("pong")
     exit(0)
 except Exception as e:
     exit(1)
